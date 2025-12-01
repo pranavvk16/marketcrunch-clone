@@ -16,7 +16,7 @@ const Hero: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('gemini');
+  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('openrouter');
   const [isPinging, setIsPinging] = useState(false);
   const [pingResult, setPingResult] = useState<{ success: boolean; message: string } | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);

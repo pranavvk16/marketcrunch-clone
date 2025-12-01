@@ -10,10 +10,10 @@ export interface StockData {
 
 // List of popular tickers to track
 const POPULAR_TICKERS = [
-  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AMD', // Tech
-  'JPM', 'BAC', 'GS', 'V', // Financials
-  'WMT', 'DIS', 'NKE', 'COST', // Consumer
-  'JNJ', 'PFE', 'UNH', // Healthcare
+  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'AMD', 'INTC', 'CSCO', 'ADBE', 'CRM', 'NFLX', // Tech
+  'JPM', 'BAC', 'GS', 'V', 'MA', // Financials
+  'WMT', 'DIS', 'NKE', 'COST', 'PEP', 'KO', 'MCD', // Consumer
+  'JNJ', 'PFE', 'UNH', 'ABBV', 'MRK', // Healthcare
   'XOM', 'CVX', // Energy
   'SPY', 'QQQ', 'DIA', 'IWM' // ETFs
 ];

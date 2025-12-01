@@ -12,7 +12,8 @@ const Navbar: React.FC = () => {
     setTestResult(null);
 
     try {
-      const response = await fetch('/api/ping');
+      const provider = localStorage.getItem('selectedProvider') || 'openrouter';
+      const response = await fetch(`/api/ping?provider=${provider}`);
       const data = await response.json();
 
       setTestResult({
@@ -33,7 +34,10 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#050505]/85 backdrop-blur-md border-b border-[#333333] py-[18px]">
+    <header
+      className="sticky top-0 z-50 bg-[#050505]/85 backdrop-blur-md border-b border-[#333333] py-[18px]"
+      style={{ backgroundImage: 'radial-gradient(circle at 50% 0, #ffffff14 0%, #05050500 60%)' }}
+    >
       <div className="max-w-[1200px] mx-auto px-5">
         <nav className="flex justify-between items-center">
           <a href="/" className="text-2xl font-bold text-white flex items-center gap-2.5 tracking-tight hover:text-white/90 transition-colors">
@@ -50,8 +54,8 @@ const Navbar: React.FC = () => {
               onClick={testAIConnection}
               disabled={testingAI}
               className={`px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center gap-2 ${testingAI
-                  ? 'bg-[#222] text-[#888] cursor-wait'
-                  : 'bg-[#1a1a1a] text-white border border-[#333] hover:border-[#00c08b]'
+                ? 'bg-[#222] text-[#888] cursor-wait'
+                : 'bg-[#1a1a1a] text-white border border-[#333] hover:border-[#00c08b]'
                 }`}
             >
               {testingAI ? (
@@ -83,8 +87,8 @@ const Navbar: React.FC = () => {
         {/* Test Result Toast */}
         {testResult && (
           <div className={`mt-4 p-3 rounded-lg border ${testResult.success
-              ? 'bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]'
-              : 'bg-[#ef4444]/10 border-[#ef4444]/20 text-[#ef4444]'
+            ? 'bg-[#10b981]/10 border-[#10b981]/20 text-[#10b981]'
+            : 'bg-[#ef4444]/10 border-[#ef4444]/20 text-[#ef4444]'
             } text-sm font-medium flex items-center gap-2`}>
             <i className={`fa-solid ${testResult.success ? 'fa-check-circle' : 'fa-exclamation-circle'}`}></i>
             {testResult.message}
@@ -103,8 +107,8 @@ const Navbar: React.FC = () => {
               onClick={testAIConnection}
               disabled={testingAI}
               className={`px-4 py-2 rounded-lg font-medium transition-all text-sm flex items-center gap-2 justify-center ${testingAI
-                  ? 'bg-[#222] text-[#888] cursor-wait'
-                  : 'bg-[#1a1a1a] text-white border border-[#333]'
+                ? 'bg-[#222] text-[#888] cursor-wait'
+                : 'bg-[#1a1a1a] text-white border border-[#333]'
                 }`}
             >
               {testingAI ? (
