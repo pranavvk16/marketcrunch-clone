@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Metadata } from 'next';
 
+import './globals.css';
+
 export const metadata: Metadata = {
   title: 'MarketCrunch AI',
   description: 'AI-Driven Research & Price Target dashboard for investors.',
@@ -14,18 +16,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Tailwind CSS via CDN to match existing style setup */}
-        <script src="https://cdn.tailwindcss.com"></script>
-        
         {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-        
+
         {/* Font Awesome */}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-        <style dangerouslySetInnerHTML={{__html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           body {
               font-family: 'Poppins', sans-serif;
               background-color: #050505;
