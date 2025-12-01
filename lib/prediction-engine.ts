@@ -1,4 +1,5 @@
 import { getGenerativeModel } from './gemini';
+import { generateOpenRouterPrediction } from './openrouter';
 import { getStockByTicker } from './stocks-data';
 import { SchemaType } from "@google/generative-ai";
 
@@ -28,13 +29,17 @@ export interface StockPrediction {
 }
 
 /**
- * Generate comprehensive AI-powered stock prediction using Gemini
+ * Generate comprehensive AI-powered stock prediction using Gemini or OpenRouter
  */
-export async function generateStockPrediction(ticker: string): Promise<StockPrediction> {
+export async function generateStockPrediction(ticker: string, provider: 'gemini' | 'openrouter' = 'gemini'): Promise<StockPrediction> {
   const stock = await getStockByTicker(ticker);
   
   if (!stock) {
     throw new Error(`Invalid ticker: ${ticker}. Not in supported stock universe.`);
+  }
+
+  if (provider === 'openrouter') {
+    return generateOpenRouterPrediction(ticker, stock);
   }
 
   const prompt = `
@@ -189,19 +194,20 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 /**
  * Get prediction with caching to avoid excessive API calls
  */
-export async function getCachedPrediction(ticker: string): Promise<StockPrediction> {
+export async function getCachedPrediction(ticker: string, provider: 'gemini' | 'openrouter' = 'gemini'): Promise<StockPrediction> {
   const normalizedTicker = ticker.toUpperCase();
-  const cached = predictionCache.get(normalizedTicker);
+  const cacheKey = `${normalizedTicker}:${provider}`;
+  const cached = predictionCache.get(cacheKey);
   
   if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-    console.log(`Cache hit for ${normalizedTicker}`);
+    console.log(`Cache hit for ${cacheKey}`);
     return cached.prediction;
   }
 
-  console.log(`Generating new prediction for ${normalizedTicker}`);
-  const prediction = await generateStockPrediction(normalizedTicker);
+  console.log(`Generating new prediction for ${normalizedTicker} using ${provider}`);
+  const prediction = await generateStockPrediction(normalizedTicker, provider);
   
-  predictionCache.set(normalizedTicker, {
+  predictionCache.set(cacheKey, {
     prediction,
     timestamp: Date.now()
   });
@@ -214,6 +220,10 @@ export async function getCachedPrediction(ticker: string): Promise<StockPredicti
  */
 export function clearPredictionCache(ticker?: string): void {
   if (ticker) {
+    // Clear both providers for this ticker
+    predictionCache.delete(`${ticker.toUpperCase()}:gemini`);
+    predictionCache.delete(`${ticker.toUpperCase()}:openrouter`);
+    // Also try legacy key just in case
     predictionCache.delete(ticker.toUpperCase());
   } else {
     predictionCache.clear();

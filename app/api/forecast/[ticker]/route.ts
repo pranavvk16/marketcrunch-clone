@@ -15,11 +15,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ tick
       }, { status: 404 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const provider = (searchParams.get('provider') as 'gemini' | 'openrouter') || 'gemini';
+
     const stock = await getStockByTicker(ticker);
-    console.log(`📈 Generating forecast for ${ticker} (${stock?.name})...`);
+    console.log(`📈 Generating forecast for ${ticker} (${stock?.name}) using ${provider}...`);
 
     // Generate prediction with caching
-    const prediction = await getCachedPrediction(ticker);
+    const prediction = await getCachedPrediction(ticker, provider);
 
     return NextResponse.json({
       success: true,

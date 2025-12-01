@@ -16,7 +16,41 @@ const Hero: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('gemini');
+  const [isPinging, setIsPinging] = useState(false);
+  const [pingResult, setPingResult] = useState<{ success: boolean; message: string } | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Load provider from localStorage on mount
+  useEffect(() => {
+    const savedProvider = localStorage.getItem('selectedProvider');
+    if (savedProvider === 'openrouter' || savedProvider === 'gemini') {
+      setSelectedProvider(savedProvider);
+    }
+  }, []);
+
+  const handleProviderChange = (provider: 'gemini' | 'openrouter') => {
+    setSelectedProvider(provider);
+    localStorage.setItem('selectedProvider', provider);
+    setPingResult(null);
+  };
+
+  const handlePing = async () => {
+    setIsPinging(true);
+    setPingResult(null);
+    try {
+      const res = await fetch(`/api/ping?provider=${selectedProvider}`);
+      const data = await res.json();
+      setPingResult({
+        success: data.success,
+        message: data.success ? `Connected to ${selectedProvider === 'gemini' ? 'Gemini' : 'Grok'}` : 'Connection failed'
+      });
+    } catch (error) {
+      setPingResult({ success: false, message: 'Connection failed' });
+    } finally {
+      setIsPinging(false);
+    }
+  };
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -73,7 +107,10 @@ const Hero: React.FC = () => {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol: symbolToAnalyze }),
+        body: JSON.stringify({
+          symbol: symbolToAnalyze,
+          provider: selectedProvider
+        }),
       });
 
       const data = await response.json();
@@ -88,7 +125,7 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative pt-[100px] pb-[80px] text-center overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08)_0%,rgba(5,5,5,0)_60%)]">
+    <section className="relative pt-[100px] pb-[80px] text-center bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08)_0%,rgba(5,5,5,0)_60%)]">
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 z-[-1] opacity-30 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:40px_40px] [mask-image:linear-gradient(to_bottom,black_40%,transparent_100%)]"></div>
 
@@ -101,9 +138,54 @@ const Hero: React.FC = () => {
           We analyze 350 million+ points everyday to create <strong>Daily and Weekly</strong> price signals.
         </p>
 
-        <span className="inline-block font-semibold text-[#10b981] mb-[50px] bg-[#10b981]/10 px-3 py-1.5 rounded-[20px] text-[0.9rem] border border-[#10b981]/20">
+        <span className="inline-block font-semibold text-[#10b981] mb-[30px] bg-[#10b981]/10 px-3 py-1.5 rounded-[20px] text-[0.9rem] border border-[#10b981]/20">
           Over 73% win-rate in backtests.
         </span>
+
+        {/* AI Provider Selector */}
+        <div className="flex flex-col items-center gap-3 mb-[30px]">
+          <div className="flex items-center gap-2 bg-[#111] border border-[#333] rounded-lg p-1">
+            <button
+              onClick={() => handleProviderChange('gemini')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${selectedProvider === 'gemini'
+                ? 'bg-[#00c08b] text-black font-medium'
+                : 'text-[#888] hover:text-white'
+                }`}
+            >
+              Gemini
+            </button>
+            <button
+              onClick={() => handleProviderChange('openrouter')}
+              className={`px-4 py-2 rounded-md text-sm transition-all ${selectedProvider === 'openrouter'
+                ? 'bg-[#00c08b] text-black font-medium'
+                : 'text-[#888] hover:text-white'
+                }`}
+            >
+              Grok (Beta)
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handlePing}
+              disabled={isPinging}
+              className="text-xs text-[#666] hover:text-[#00c08b] transition-colors flex items-center gap-1"
+            >
+              {isPinging ? (
+                <i className="fa-solid fa-circle-notch fa-spin"></i>
+              ) : (
+                <i className="fa-solid fa-plug"></i>
+              )}
+              Test Connection
+            </button>
+
+            {pingResult && (
+              <span className={`text-xs ${pingResult.success ? 'text-green-500' : 'text-red-500'}`}>
+                {pingResult.success ? '● Online' : '● Offline'}
+              </span>
+            )}
+          </div>
+        </div>
 
         <div ref={searchRef} className="max-w-[550px] mx-auto mb-[25px] relative">
           <form
@@ -131,7 +213,7 @@ const Hero: React.FC = () => {
 
           {/* Autocomplete Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl overflow-hidden z-30 text-left">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl overflow-hidden z-50 text-left">
               {suggestions.map((suggestion, index) => (
                 <div
                   key={`${suggestion.symbol}-${index}`}

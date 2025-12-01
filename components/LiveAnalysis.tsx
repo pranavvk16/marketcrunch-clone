@@ -323,11 +323,11 @@ const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ d
               <div>
                 <h4 className="text-sm text-[#888] mb-3">Consensus</h4>
                 <div className="flex gap-4 items-center">
-                  <div className="text-3xl font-bold text-white">
-                    {realData.recommendations.recommendedSymbol || 'N/A'}
+                  <div className="text-3xl font-bold text-white capitalize">
+                    {realData.recommendations?.recommendedSymbol || realData.summary?.financialData?.recommendationKey || 'N/A'}
                   </div>
                   <div className="text-sm text-[#666]">
-                    Based on {realData.recommendations.symbol || 'analyst'} ratings
+                    Based on analyst ratings
                   </div>
                 </div>
               </div>
@@ -336,15 +336,21 @@ const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ d
                 <div className="flex gap-8">
                   <div>
                     <div className="text-xs text-[#666]">Low</div>
-                    <div className="text-lg font-bold text-[#ef4444]">N/A</div>
+                    <div className="text-lg font-bold text-[#ef4444]">
+                      {realData.summary?.financialData?.targetLowPrice ? `$${realData.summary.financialData.targetLowPrice}` : 'N/A'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-[#666]">Average</div>
-                    <div className="text-lg font-bold text-white">N/A</div>
+                    <div className="text-lg font-bold text-white">
+                      {realData.summary?.financialData?.targetMeanPrice ? `$${realData.summary.financialData.targetMeanPrice}` : 'N/A'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-[#666]">High</div>
-                    <div className="text-lg font-bold text-[#10b981]">N/A</div>
+                    <div className="text-lg font-bold text-[#10b981]">
+                      {realData.summary?.financialData?.targetHighPrice ? `$${realData.summary.financialData.targetHighPrice}` : 'N/A'}
+                    </div>
                   </div>
                 </div>
               </div>

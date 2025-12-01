@@ -13,6 +13,15 @@ export default function Dashboard() {
     const [prediction, setPrediction] = useState<StockPrediction | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSector, setSelectedSector] = useState<string>('All');
+    const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('gemini');
+
+    // Load provider from localStorage
+    useEffect(() => {
+        const savedProvider = localStorage.getItem('selectedProvider');
+        if (savedProvider === 'openrouter' || savedProvider === 'gemini') {
+            setSelectedProvider(savedProvider);
+        }
+    }, []);
 
     // Fetch stocks on mount
     useEffect(() => {
@@ -46,7 +55,10 @@ export default function Dashboard() {
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symbol: ticker })
+                body: JSON.stringify({
+                    symbol: ticker,
+                    provider: selectedProvider
+                })
             });
 
             const data = await response.json();
