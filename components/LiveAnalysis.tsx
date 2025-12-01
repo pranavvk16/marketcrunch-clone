@@ -52,6 +52,7 @@ const ProgressBar: React.FC<{ value: number; colorClass?: string }> = ({ value, 
 const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ data, onClose }) => {
   const [realData, setRealData] = useState<DashboardData | null>(null);
   const [loadingRealData, setLoadingRealData] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const fetchRealData = async () => {
@@ -251,43 +252,110 @@ const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ d
 
         {/* 5. Fundamentals (New) */}
         {realData && realData.summary && (
-          <Card>
+          <Card className="col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
               <i className="fa-solid fa-file-invoice-dollar text-green-400"></i>
               <h3 className="text-lg font-semibold text-white">Fundamentals</h3>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between border-b border-[#333] pb-2">
-                <span className="text-sm text-[#888]">Market Cap</span>
-                <span className="text-sm font-bold text-white">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="text-xs text-[#888] mb-1 flex items-center gap-1"><i className="fa-solid fa-coins text-[#666]"></i> Market Cap</div>
+                <div className="text-sm font-bold text-white">
                   {realData.summary.price?.marketCap ? `$${(realData.summary.price.marketCap / 1e9).toFixed(2)}B` : 'N/A'}
-                </span>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-[#333] pb-2">
-                <span className="text-sm text-[#888]">P/E Ratio</span>
-                <span className="text-sm font-bold text-white">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="text-xs text-[#888] mb-1 flex items-center gap-1"><i className="fa-solid fa-scale-unbalanced text-[#666]"></i> P/E Ratio</div>
+                <div className="text-sm font-bold text-white">
                   {realData.summary.summaryDetail?.trailingPE?.toFixed(2) || 'N/A'}
-                </span>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-[#333] pb-2">
-                <span className="text-sm text-[#888]">EPS (TTM)</span>
-                <span className="text-sm font-bold text-white">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="text-xs text-[#888] mb-1 flex items-center gap-1"><i className="fa-solid fa-money-bill-trend-up text-[#666]"></i> EPS (TTM)</div>
+                <div className="text-sm font-bold text-white">
                   {realData.summary.defaultKeyStatistics?.trailingEps?.toFixed(2) || 'N/A'}
-                </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-[#888]">52 Week High</span>
-                <span className="text-sm font-bold text-[#10b981]">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg border border-[#333]">
+                <div className="text-xs text-[#888] mb-1 flex items-center gap-1"><i className="fa-solid fa-arrow-up-right-dots text-[#666]"></i> 52W High</div>
+                <div className="text-sm font-bold text-[#10b981]">
                   {realData.summary.summaryDetail?.fiftyTwoWeekHigh?.toFixed(2) || 'N/A'}
-                </span>
+                </div>
               </div>
             </div>
           </Card>
         )}
 
-        {/* 6. Options Summary (New) */}
+        {/* 6. Real-Time Insights (Moved up) */}
+        {realData && (realData.recommendations || realData.summary?.financialData) && (
+          <Card className="col-span-1 md:col-span-2 lg:col-span-2">
+            <div className="flex items-center gap-2.5 mb-5">
+              <i className="fa-solid fa-users-viewfinder text-orange-400"></i>
+              <h3 className="text-lg font-semibold text-white">Analyst Recommendations</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Consensus */}
+              <div className="bg-[#1a1a1a] p-5 rounded-xl border border-[#333]">
+                <h4 className="text-sm text-[#888] mb-4 flex items-center gap-2">
+                  <i className="fa-solid fa-check-to-slot"></i> Consensus
+                </h4>
+                <div className="flex items-center gap-4">
+                  <div className={`text-4xl font-bold capitalize ${(realData.summary?.financialData?.recommendationKey || '').includes('buy') ? 'text-[#10b981]' :
+                    (realData.summary?.financialData?.recommendationKey || '').includes('sell') ? 'text-[#ef4444]' : 'text-[#fbbf24]'
+                    }`}>
+                    {realData.summary?.financialData?.recommendationKey?.replace('_', ' ') || 'N/A'}
+                  </div>
+                  <div className="text-xs text-[#666] max-w-[150px]">
+                    Based on aggregated analyst ratings and price targets.
+                  </div>
+                </div>
+              </div>
+
+              {/* Target Price */}
+              <div className="bg-[#1a1a1a] p-5 rounded-xl border border-[#333]">
+                <h4 className="text-sm text-[#888] mb-4 flex items-center gap-2">
+                  <i className="fa-solid fa-crosshairs"></i> Price Target
+                </h4>
+
+                {realData.summary?.financialData?.targetMeanPrice ? (
+                  <div className="relative pt-6 pb-2">
+                    {/* Range Bar */}
+                    <div className="h-2 bg-[#333] rounded-full w-full relative">
+                      <div
+                        className="absolute h-4 w-1 bg-white top-1/2 -translate-y-1/2 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                        style={{
+                          left: `${Math.min(Math.max(((realData.summary.financialData.targetMeanPrice - realData.summary.financialData.targetLowPrice) / (realData.summary.financialData.targetHighPrice - realData.summary.financialData.targetLowPrice)) * 100, 0), 100)}%`
+                        }}
+                      ></div>
+                    </div>
+
+                    {/* Labels */}
+                    <div className="flex justify-between mt-3 text-xs font-mono">
+                      <div className="text-left">
+                        <div className="text-[#ef4444] font-bold">${realData.summary.financialData.targetLowPrice}</div>
+                        <div className="text-[#666]">Low</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-white font-bold text-lg">${realData.summary.financialData.targetMeanPrice}</div>
+                        <div className="text-[#888] text-[10px]">Average</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[#10b981] font-bold">${realData.summary.financialData.targetHighPrice}</div>
+                        <div className="text-[#666]">High</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-[#666] text-sm italic">Target price data unavailable</div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* 7. Options Summary (Moved down) */}
         {realData && realData.options && realData.options.length > 0 && (
-          <Card>
+          <Card className="col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
               <i className="fa-solid fa-scale-balanced text-pink-400"></i>
               <h3 className="text-lg font-semibold text-white">Options Chain</h3>
@@ -296,13 +364,13 @@ const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ d
               Nearest Expiration: <span className="text-white">{new Date(realData.options[0].expirationDate * 1000).toLocaleDateString()}</span>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#1a1a1a] p-3 rounded-lg text-center">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg text-center border border-[#333]">
                 <div className="text-xs text-[#888] mb-1">Calls Volume</div>
                 <div className="text-lg font-bold text-[#10b981]">
                   {realData.options[0].calls?.reduce((acc: number, curr: any) => acc + (curr.volume || 0), 0).toLocaleString()}
                 </div>
               </div>
-              <div className="bg-[#1a1a1a] p-3 rounded-lg text-center">
+              <div className="bg-[#1a1a1a] p-3 rounded-lg text-center border border-[#333]">
                 <div className="text-xs text-[#888] mb-1">Puts Volume</div>
                 <div className="text-lg font-bold text-[#ef4444]">
                   {realData.options[0].puts?.reduce((acc: number, curr: any) => acc + (curr.volume || 0), 0).toLocaleString()}
@@ -312,60 +380,58 @@ const LiveAnalysis: React.FC<{ data: AnalysisData; onClose: () => void }> = ({ d
           </Card>
         )}
 
-        {/* 7. Real-Time Insights */}
-        {realData && realData.recommendations && (
-          <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-            <div className="flex items-center gap-2.5 mb-5">
-              <i className="fa-solid fa-users-viewfinder text-orange-400"></i>
-              <h3 className="text-lg font-semibold text-white">Analyst Recommendations</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-sm text-[#888] mb-3">Consensus</h4>
-                <div className="flex gap-4 items-center">
-                  <div className="text-3xl font-bold text-white">
-                    {realData.recommendations.recommendedSymbol || 'N/A'}
-                  </div>
-                  <div className="text-sm text-[#666]">
-                    Based on {realData.recommendations.symbol || 'analyst'} ratings
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-sm text-[#888] mb-3">Target Price</h4>
-                <div className="flex gap-8">
-                  <div>
-                    <div className="text-xs text-[#666]">Low</div>
-                    <div className="text-lg font-bold text-[#ef4444]">N/A</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-[#666]">Average</div>
-                    <div className="text-lg font-bold text-white">N/A</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-[#666]">High</div>
-                    <div className="text-lg font-bold text-[#10b981]">N/A</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* 8. Company Insights */}
-        {realData && realData.insights && (
+        {realData && realData.summary?.summaryProfile && (
           <Card className="col-span-1 md:col-span-2 lg:col-span-3">
             <div className="flex items-center gap-2.5 mb-5">
-              <i className="fa-solid fa-lightbulb text-yellow-400"></i>
-              <h3 className="text-lg font-semibold text-white">Company Insights</h3>
+              <i className="fa-solid fa-building text-yellow-400"></i>
+              <h3 className="text-lg font-semibold text-white">Company Profile</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {realData.insights.companySnapshot && (
-                <div>
-                  <h4 className="text-sm text-[#888] mb-2">Snapshot</h4>
-                  <p className="text-sm text-[#ccc]">{realData.insights.companySnapshot.sectorInfo}</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Info Column */}
+              <div className="lg:col-span-1 space-y-4">
+                <div className="bg-[#1a1a1a] p-4 rounded-lg border border-[#333]">
+                  <div className="text-xs text-[#888] mb-1">Sector</div>
+                  <div className="text-white font-medium">{realData.summary.summaryProfile.sector || 'N/A'}</div>
                 </div>
-              )}
+                <div className="bg-[#1a1a1a] p-4 rounded-lg border border-[#333]">
+                  <div className="text-xs text-[#888] mb-1">Industry</div>
+                  <div className="text-white font-medium">{realData.summary.summaryProfile.industry || 'N/A'}</div>
+                </div>
+                <div className="bg-[#1a1a1a] p-4 rounded-lg border border-[#333]">
+                  <div className="text-xs text-[#888] mb-1">Full Time Employees</div>
+                  <div className="text-white font-medium">{realData.summary.summaryProfile.fullTimeEmployees?.toLocaleString() || 'N/A'}</div>
+                </div>
+                {realData.summary.summaryProfile.website && (
+                  <a
+                    href={realData.summary.summaryProfile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full py-2 text-center bg-[#333] hover:bg-[#444] text-white rounded-lg text-sm transition-colors"
+                  >
+                    Visit Website <i className="fa-solid fa-external-link-alt ml-1 text-xs"></i>
+                  </a>
+                )}
+              </div>
+
+              {/* Description Column */}
+              <div className="lg:col-span-2 bg-[#1a1a1a] p-5 rounded-lg border border-[#333]">
+                <h4 className="text-sm text-[#888] mb-3">About {data.symbol}</h4>
+                <div className="relative">
+                  <p className={`text-sm text-[#ccc] leading-relaxed ${!isExpanded ? 'line-clamp-4' : ''}`}>
+                    {realData.summary.summaryProfile.longBusinessSummary || "No description available."}
+                  </p>
+                  {realData.summary.summaryProfile.longBusinessSummary && realData.summary.summaryProfile.longBusinessSummary.length > 300 && (
+                    <button
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="mt-2 text-[#00c08b] text-sm hover:underline focus:outline-none"
+                    >
+                      {isExpanded ? 'Show Less' : 'Show More'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </Card>
         )}

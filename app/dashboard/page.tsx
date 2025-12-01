@@ -13,6 +13,18 @@ export default function Dashboard() {
     const [prediction, setPrediction] = useState<StockPrediction | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSector, setSelectedSector] = useState<string>('All');
+    const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('gemini');
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20;
+
+    // Load provider from localStorage
+    useEffect(() => {
+        const savedProvider = localStorage.getItem('selectedProvider');
+        if (savedProvider === 'openrouter' || savedProvider === 'gemini') {
+            setSelectedProvider(savedProvider);
+        }
+    }, []);
 
     // Fetch stocks on mount
     useEffect(() => {
@@ -46,7 +58,10 @@ export default function Dashboard() {
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symbol: ticker })
+                body: JSON.stringify({
+                    symbol: ticker,
+                    provider: selectedProvider
+                })
             });
 
             const data = await response.json();
@@ -78,6 +93,22 @@ export default function Dashboard() {
         return matchesSearch && matchesSector;
     });
 
+    // Pagination Logic
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentStocks = filteredStocks.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredStocks.length / itemsPerPage);
+
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedSector]);
+
+    const handlePageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const sectors = ['All', 'Technology', 'Financials', 'Consumer', 'Healthcare', 'Energy', 'ETF', 'Automotive'];
 
     return (
@@ -88,9 +119,9 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[#00c08b] to-white bg-clip-text text-transparent">
-                                Stock Dashboard
+                                 Dashboard
                             </h1>
-                            <p className="text-[#888] mt-1">AI-powered predictions for 25 popular stocks</p>
+                            <p className="text-[#888] mt-1">AI-powered predictions for popular stocks</p>
                         </div>
                         <a
                             href="/"
@@ -157,13 +188,13 @@ export default function Dashboard() {
                 {!loading && !error && (
                     <>
                         <div className="mb-6 text-sm text-[#888]">
-                            Showing {filteredStocks.length} of {stocks.length} stocks
+                            Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredStocks.length)} of {filteredStocks.length} stocks
                             {selectedSector !== 'All' && ` in ${selectedSector}`}
                         </div>
 
                         {/* Stock Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredStocks.map(stock => (
+                            {currentStocks.map(stock => (
                                 <StockCard
                                     key={stock.ticker}
                                     stock={stock}
@@ -172,6 +203,29 @@ export default function Dashboard() {
                                 />
                             ))}
                         </div>
+
+                        {/* Pagination Controls */}
+                        {filteredStocks.length > itemsPerPage && (
+                            <div className="flex justify-center items-center gap-4 mt-12">
+                                <button
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 bg-[#111] border border-[#333] rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#00c08b] transition-colors flex items-center gap-2"
+                                >
+                                    <i className="fa-solid fa-chevron-left"></i> Previous
+                                </button>
+                                <span className="text-[#888]">
+                                    Page <span className="text-white font-bold">{currentPage}</span> of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 bg-[#111] border border-[#333] rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed hover:border-[#00c08b] transition-colors flex items-center gap-2"
+                                >
+                                    Next <i className="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        )}
 
                         {filteredStocks.length === 0 && (
                             <div className="text-center py-20">

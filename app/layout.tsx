@@ -23,6 +23,7 @@ export default function RootLayout({
 
         {/* Font Awesome */}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
         <style dangerouslySetInnerHTML={{
           __html: `
@@ -32,13 +33,6 @@ export default function RootLayout({
               color: #ffffff;
               overflow-x: hidden;
               -webkit-font-smoothing: antialiased;
-          }
-          @keyframes ticker {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(-100%); }
-          }
-          .animate-ticker {
-              animation: ticker 40s linear infinite;
           }
           ::-webkit-scrollbar {
               width: 8px;

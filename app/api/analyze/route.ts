@@ -5,7 +5,8 @@ import { getCachedPrediction } from '@/lib/prediction-engine';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { symbol } = body;
+    const { symbol, provider = 'gemini' } = body;
+    const { symbol: _symbol, ...rest } = body; // unused
 
     if (!symbol) {
       return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
@@ -20,10 +21,10 @@ export async function POST(request: Request) {
       }, { status: 404 });
     }
 
-    console.log(`📊 Analyzing ${ticker}...`);
+    console.log(`📊 Analyzing ${ticker} using ${provider}...`);
     
     // Generate prediction using our AI engine (with caching)
-    const prediction = await getCachedPrediction(ticker);
+    const prediction = await getCachedPrediction(ticker, provider as 'gemini' | 'openrouter');
 
     console.log(`✅ Successfully generated prediction for ${ticker}`);
     return NextResponse.json(prediction);

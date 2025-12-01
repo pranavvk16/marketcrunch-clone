@@ -171,7 +171,7 @@ export async function getQuotes(symbols: string[]): Promise<any[]> {
 export async function getQuoteSummary(symbol: string, queryOptions?: any): Promise<any> {
     try {
         // Default modules if none provided
-        const modules = queryOptions?.modules || ['summaryProfile', 'financialData', 'defaultKeyStatistics'];
+        const modules = queryOptions?.modules || ['summaryProfile', 'financialData', 'defaultKeyStatistics', 'price', 'summaryDetail'];
         return await yahooFinance.quoteSummary(symbol, { ...queryOptions, modules });
     } catch (error) {
         console.error(`Error fetching quote summary for ${symbol}:`, error);
