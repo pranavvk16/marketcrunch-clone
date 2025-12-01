@@ -1,32 +1,35 @@
 import { NextResponse } from 'next/server';
-import { getCachedPrediction } from '../../../lib/prediction-engine';
-import { isValidTicker } from '../../../lib/stocks-data';
+import { resolveTicker } from '@/lib/stocks-data';
+import { getCachedPrediction } from '@/lib/prediction-engine';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { symbol } = await req.json();
+    const body = await request.json();
+    const { symbol } = body;
 
     if (!symbol) {
       return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
     }
 
-    // Validate ticker is in our supported universe
-    if (!isValidTicker(symbol)) {
+    // Resolve ticker from symbol or name
+    const ticker = await resolveTicker(symbol);
+
+    if (!ticker) {
       return NextResponse.json({ 
-        error: `Ticker ${symbol} is not supported. Please use one of our 25 supported stocks.` 
-      }, { status: 400 });
+        error: `Could not find a stock matching "${symbol}". Please try a valid ticker symbol.` 
+      }, { status: 404 });
     }
 
-    console.log(`Analyzing ${symbol}...`);
+    console.log(`📊 Analyzing ${ticker}...`);
     
     // Generate prediction using our AI engine (with caching)
-    const prediction = await getCachedPrediction(symbol);
+    const prediction = await getCachedPrediction(ticker);
 
-    console.log(`Successfully generated prediction for ${symbol}`);
+    console.log(`✅ Successfully generated prediction for ${ticker}`);
     return NextResponse.json(prediction);
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('❌ Analysis error:', error);
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Failed to analyze ticker' 
     }, { status: 500 });

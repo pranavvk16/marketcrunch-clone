@@ -31,7 +31,7 @@ export interface StockPrediction {
  * Generate comprehensive AI-powered stock prediction using Gemini
  */
 export async function generateStockPrediction(ticker: string): Promise<StockPrediction> {
-  const stock = getStockByTicker(ticker);
+  const stock = await getStockByTicker(ticker);
   
   if (!stock) {
     throw new Error(`Invalid ticker: ${ticker}. Not in supported stock universe.`);

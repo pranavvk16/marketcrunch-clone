@@ -1,25 +1,79 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LiveAnalysis from './LiveAnalysis';
+
+interface Suggestion {
+  symbol: string;
+  name: string;
+  exchange: string;
+  type: string;
+}
 
 const Hero: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+
+    if (value.length > 1) {
+      try {
+        const res = await fetch(`/api/search?query=${encodeURIComponent(value)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.results);
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (symbol: string) => {
+    setSearchValue(symbol);
+    setShowSuggestions(false);
+    handleSearch(new Event('submit') as any, symbol);
+  };
+
+  const handleSearch = async (e: React.FormEvent, overrideSymbol?: string) => {
     e.preventDefault();
-    if (!searchValue.trim()) return;
+    const symbolToAnalyze = overrideSymbol || searchValue;
+
+    if (!symbolToAnalyze.trim()) return;
 
     setIsLoading(true);
     setAnalysisResult(null);
+    setShowSuggestions(false);
 
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbol: searchValue }),
+        body: JSON.stringify({ symbol: symbolToAnalyze }),
       });
 
       const data = await response.json();
@@ -51,27 +105,49 @@ const Hero: React.FC = () => {
           Over 73% win-rate in backtests.
         </span>
 
-        <form
-          onSubmit={handleSearch}
-          className="max-w-[550px] mx-auto mb-[25px] relative flex flex-col md:flex-row rounded-[10px] bg-[#111111] p-[6px] border border-[#333333] focus-within:border-[#888888] transition-colors"
-        >
-          <input
-            type="text"
-            placeholder="Try Tesla, AAPL, GLD"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="flex-1 p-[15px] px-[20px] border-none outline-none text-[1rem] bg-transparent text-white placeholder-[#555]"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-2 md:mt-0 px-[30px] py-[12px] bg-white text-black rounded-lg font-semibold text-[0.95rem] tracking-tight hover:bg-[#e0e0e0] hover:-translate-y-[1px] hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all duration-300 disabled:opacity-70 disabled:cursor-wait"
+        <div ref={searchRef} className="max-w-[550px] mx-auto mb-[25px] relative">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col md:flex-row rounded-[10px] bg-[#111111] p-[6px] border border-[#333333] focus-within:border-[#888888] transition-colors relative z-20"
           >
-            {isLoading ? (
-              <span><i className="fa-solid fa-circle-notch fa-spin mr-2"></i>Analyzing</span>
-            ) : 'Try It Free'}
-          </button>
-        </form>
+            <input
+              type="text"
+              placeholder="Try Tesla, AAPL, GLD"
+              value={searchValue}
+              onChange={handleInputChange}
+              onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+              className="flex-1 p-[15px] px-[20px] border-none outline-none text-[1rem] bg-transparent text-white placeholder-[#555]"
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="mt-2 md:mt-0 px-[30px] py-[12px] bg-white text-black rounded-lg font-semibold text-[0.95rem] tracking-tight hover:bg-[#e0e0e0] hover:-translate-y-[1px] hover:shadow-[0_0_15px_rgba(255,255,255,0.15)] transition-all duration-300 disabled:opacity-70 disabled:cursor-wait"
+            >
+              {isLoading ? (
+                <span><i className="fa-solid fa-circle-notch fa-spin mr-2"></i>Analyzing</span>
+              ) : 'Try It Free'}
+            </button>
+          </form>
+
+          {/* Autocomplete Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl overflow-hidden z-30 text-left">
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={`${suggestion.symbol}-${index}`}
+                  onClick={() => handleSelectSuggestion(suggestion.symbol)}
+                  className="px-4 py-3 hover:bg-[#2a2a2a] cursor-pointer border-b border-[#333] last:border-none transition-colors"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-white">{suggestion.symbol}</span>
+                    <span className="text-xs text-[#666] uppercase">{suggestion.exchange}</span>
+                  </div>
+                  <div className="text-sm text-[#888] truncate">{suggestion.name}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {!analysisResult && !isLoading && (
           <p className="text-[0.85rem] text-[#555] tracking-wide">

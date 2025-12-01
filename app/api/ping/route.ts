@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getLLMProvider } from '../../../lib/gemini';
+import { getGenerativeModel } from '@/lib/gemini';
 
 export async function GET() {
   try {
     console.log('🏓 Testing Gemini API connection...');
     
-    const provider = getLLMProvider();
-    const model = provider.getGenerativeModel("gemini-2.5-flash");
+    const model = getGenerativeModel("gemini-2.5-flash");
     
     const result = await model.generateContent("What is 2+2? Reply with just the number.");
     const text = result.response.text();

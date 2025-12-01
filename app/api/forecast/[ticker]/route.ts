@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCachedPrediction } from '../../../../lib/prediction-engine';
-import { isValidTicker, getStockByTicker } from '../../../../lib/stocks-data';
+import { isValidTicker, getStockByTicker } from '@/lib/stocks-data';
+import { getCachedPrediction } from '@/lib/prediction-engine';
 
-export async function GET(
-  req: Request,
-  { params }: { params: { ticker: string } }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ ticker: string }> }) {
   try {
-    const ticker = params.ticker.toUpperCase();
+    const { ticker: tickerParam } = await params;
+    const ticker = tickerParam.toUpperCase();
 
     // Validate ticker
     if (!isValidTicker(ticker)) {
@@ -17,8 +15,8 @@ export async function GET(
       }, { status: 404 });
     }
 
-    const stock = getStockByTicker(ticker);
-    console.log(`Generating forecast for ${ticker} (${stock?.name})...`);
+    const stock = await getStockByTicker(ticker);
+    console.log(`📈 Generating forecast for ${ticker} (${stock?.name})...`);
 
     // Generate prediction with caching
     const prediction = await getCachedPrediction(ticker);
@@ -29,7 +27,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error(`Forecast error for ${params.ticker}:`, error);
+    console.error(`Forecast error for ${params}:`, error);
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Failed to generate forecast' 
     }, { status: 500 });
