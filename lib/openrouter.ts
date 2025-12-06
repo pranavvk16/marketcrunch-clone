@@ -49,7 +49,7 @@ Ensure all fields are present and correctly typed.
 
   try {
     const completion = await openrouter.chat.send({
-      model: "x-ai/grok-4.1-fast:free",
+      model: process.env.OPENROUTER_MODEL ,
       messages: [
         {
           role: "user",

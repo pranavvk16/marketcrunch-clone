@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     if (provider === 'openrouter') {
       const openrouter = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
       const completion = await openrouter.chat.send({
-        model: "x-ai/grok-4.1-fast:free",
+        model: process.env.OPENROUTER_MODEL ,
         messages: [{ role: "user", content: "2+2=" }],
       });
       const content = completion.choices[0]?.message?.content;
